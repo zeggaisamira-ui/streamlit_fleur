@@ -87,3 +87,86 @@ elif st.session_state["authentication_status"] is False:
 elif st.session_state["authentication_status"] is None:
     st.warning("Veuillez entrer vos identifiants")
 
+import streamlit as st
+import pandas as pd
+from streamlit_authenticator import Authenticate
+from streamlit_option_menu import option_menu
+
+st.set_page_config(page_title="Choix de votre film", layout="wide")
+
+# ===============================
+# LECTURE DU CSV UTILISATEURS
+# ===============================
+df_users = pd.read_csv("comptes.csv")
+
+credentials = {"usernames": {}}
+
+for _, row in df_users.iterrows():
+    credentials["usernames"][row["name"]] = {
+        "name": row["name"],
+        "password": row["password"],
+        "email": row["email"],
+        "failed_login_attempts": row["failed_login_attemps"],
+        "logged_in": row["logged_in"],
+        "role": row["role"],
+    }
+
+# ===============================
+# AUTHENTIFICATION
+# ===============================
+authenticator = Authenticate(
+    credentials,
+    "cookie_film",
+    "cle_secrete_film",
+    30
+)
+
+authenticator.login(key="login_form_film")
+
+# ===============================
+# SI CONNECTÉ
+# ===============================
+if st.session_state["authentication_status"]:
+
+    # SIDEBAR
+    with st.sidebar:
+        st.write(f"Bienvenue {st.session_state['name']} 🎬")
+
+        selection = option_menu(
+            menu_title="Menu",
+            options=["Accueil", "Choisir un film"],
+            icons=["house", "film"],
+            default_index=0
+        )
+
+        authenticator.logout("Déconnexion")
+
+    # PAGE ACCUEIL
+    if selection == "Accueil":
+        st.title("🎥 Application de recommandation de films")
+        st.write("Bienvenue sur votre plateforme personnalisée.")
+        st.write("Choisissez un film et découvrez des recommandations adaptées à vos goûts.")
+
+    # PAGE CHOIX FILM
+    if selection == "Choisir un film":
+        st.title("🎬 Sélectionnez un film")
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.image("images.1.png", caption="Film 1")
+
+        with col2:
+            st.image("images.2.png", caption="Film 2")
+
+        with col3:
+            st.image("images.3.png", caption="Film 3")
+
+# ===============================
+# ERREURS LOGIN
+# ===============================
+elif st.session_state["authentication_status"] is False:
+    st.error("Nom d'utilisateur ou mot de passe incorrect")
+
+elif st.session_state["authentication_status"] is None:
+    st.warning("Veuillez entrer vos identifiants")
